@@ -5,45 +5,80 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Terraria Sounds — Sound Board</title>
 <style>
-  :root { color-scheme: dark; }
+  :root {
+    color-scheme: dark;
+    --pink-50:  #fff0f7;
+    --pink-200: #ffc0e0;
+    --pink-300: #ff9bcb;
+    --pink-400: #ff5fae;
+    --pink-500: #ff2e93;
+    --pink-600: #e6006f;
+    --pink-700: #b30057;
+    --ink:      #2a0a1c;
+  }
   * { box-sizing: border-box; }
   body {
     margin: 0; padding: 2rem 1.25rem 4rem;
     font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
-    background: radial-gradient(1200px 600px at 50% -10%, #2b1b3d, #12121a 60%);
-    color: #eee; min-height: 100vh;
+    color: var(--pink-50);
+    min-height: 100vh;
+    background:
+      radial-gradient(900px 500px at 12% -10%, #ff2e9366, transparent 60%),
+      radial-gradient(900px 600px at 90% 0%, #ff8ac866, transparent 60%),
+      linear-gradient(160deg, #ff5fae 0%, #ff2e93 35%, #b30057 75%, #6b0039 100%);
+    background-attachment: fixed;
   }
   main { max-width: 900px; margin: 0 auto; }
-  h1 { margin: 0 0 .25rem; font-size: 1.9rem; letter-spacing: -.02em; }
-  p.sub { margin: 0 0 1.75rem; color: #a49ab8; }
+  h1 {
+    margin: 0 0 .25rem; font-size: 2.1rem; letter-spacing: -.02em;
+    color: #fff; text-shadow: 0 3px 0 #b30057, 0 8px 24px #4d002670;
+  }
+  p.sub { margin: 0 0 1.75rem; color: var(--pink-200); }
+  p.sub a { color: #fff; font-weight: 600; }
+
   .toolbar { display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
   input[type=search] {
-    flex: 1 1 220px; padding: .6rem .8rem; border-radius: 10px;
-    border: 1px solid #3a3350; background: #1b1826; color: #eee; font-size: 1rem;
+    flex: 1 1 220px; padding: .65rem .9rem; border-radius: 999px;
+    border: 2px solid #fff6; background: #ffffff2e; color: #fff;
+    font-size: 1rem; outline: none; backdrop-filter: blur(4px);
   }
-  button { font: inherit; cursor: pointer; }
+  input[type=search]::placeholder { color: #ffd7ea; }
+  input[type=search]:focus { border-color: #fff; background: #ffffff44; }
+
+  button { font: inherit; cursor: pointer; font-weight: 600; }
   .toolbar button, .card .play {
-    border: 1px solid #4b3f6b; background: #2a2340; color: #eee;
-    padding: .6rem 1rem; border-radius: 10px; transition: .15s;
+    border: 2px solid #fff6; color: #fff;
+    background: linear-gradient(180deg, #ff7fbd, #e6006f);
+    padding: .6rem 1.1rem; border-radius: 999px;
+    box-shadow: 0 4px 0 #8c0047cc, 0 10px 20px #4d002655;
+    transition: transform .12s, box-shadow .12s, background .15s, filter .15s;
   }
-  .toolbar button:hover, .card .play:hover { background: #3a2f57; }
-  .grid { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  .toolbar button:hover, .card .play:hover { background: linear-gradient(180deg, #ffa0d1, #ff2e93); filter: brightness(1.05); }
+  .toolbar button:active, .card .play:active { transform: translateY(3px); box-shadow: 0 1px 0 #8c0047cc; }
+
+  .grid { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fill, minmax(265px, 1fr)); }
   .card {
-    background: #1b1826; border: 1px solid #302a45; border-radius: 14px;
-    padding: .85rem 1rem; display: flex; align-items: center; gap: .85rem;
+    background: #fff2; border: 2px solid #fff5; border-radius: 18px;
+    padding: .85rem 1rem; display: flex; align-items: center; gap: .9rem;
+    backdrop-filter: blur(6px); transition: .15s;
   }
-  .card.playing { border-color: #7ee0a5; box-shadow: 0 0 0 2px #7ee0a522; }
-  .card .name { font-weight: 600; word-break: break-word; }
-  .card .meta { color: #8b82a3; font-size: .8rem; }
+  .card.playing {
+    border-color: #fff; background: #ffffff44;
+    box-shadow: 0 0 0 4px #ffffff33, 0 10px 26px #4d002666;
+    animation: glow 1.2s ease-in-out infinite alternate;
+  }
+  @keyframes glow { to { box-shadow: 0 0 0 8px #ffffff22, 0 12px 34px #ff2e9399; } }
+  .card .name { font-weight: 700; color: #fff; word-break: break-word; text-shadow: 0 1px 2px #8c004766; }
+  .card .meta { color: var(--pink-200); font-size: .8rem; }
   .card .play { flex: 0 0 auto; }
-  .status { color: #8b82a3; margin: 1rem 0; }
-  a { color: #8ec5ff; }
+  .status { color: var(--pink-200); margin: 1rem 0; font-weight: 600; }
+  a { color: #fff; }
 </style>
 </head>
 <body>
 <main>
-  <h1>🔊 Terraria Sounds</h1>
-  <p class="sub">Every audio file in <a href="https://github.com/kadharriminecraft/terrariasounds">kadharriminecraft/terrariasounds</a>, playable in the browser.</p>
+  <h1>🎀 Terraria Sounds</h1>
+  <p class="sub">Every audio file in <a href="https://github.com/kadharriminecraft/terrariasounds" target="_blank" rel="noopener">kadharriminecraft/terrariasounds</a>, playable in the browser.</p>
 
   <div class="toolbar">
     <input type="search" id="filter" placeholder="Filter sounds…" aria-label="Filter sounds">
@@ -137,7 +172,6 @@ async function scan() {
     items = found.length ? found : FALLBACK.map(n => ({ name: n, dir: "", size: 0, url: RAW + n }));
   } catch {
     items = FALLBACK.map(n => ({ name: n, dir: "", size: 0, url: RAW + n }));
-    statusEl.textContent = "";
   }
   render();
 }
