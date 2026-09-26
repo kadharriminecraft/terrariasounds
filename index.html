@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Terraria Sounds — Sound Board</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 2rem 1.25rem 4rem;
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: radial-gradient(1200px 600px at 50% -10%, #2b1b3d, #12121a 60%);
+    color: #eee; min-height: 100vh;
+  }
+  main { max-width: 900px; margin: 0 auto; }
+  h1 { margin: 0 0 .25rem; font-size: 1.9rem; letter-spacing: -.02em; }
+  p.sub { margin: 0 0 1.75rem; color: #a49ab8; }
+  .toolbar { display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  input[type=search] {
+    flex: 1 1 220px; padding: .6rem .8rem; border-radius: 10px;
+    border: 1px solid #3a3350; background: #1b1826; color: #eee; font-size: 1rem;
+  }
+  button { font: inherit; cursor: pointer; }
+  .toolbar button, .card .play {
+    border: 1px solid #4b3f6b; background: #2a2340; color: #eee;
+    padding: .6rem 1rem; border-radius: 10px; transition: .15s;
+  }
+  .toolbar button:hover, .card .play:hover { background: #3a2f57; }
+  .grid { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  .card {
+    background: #1b1826; border: 1px solid #302a45; border-radius: 14px;
+    padding: .85rem 1rem; display: flex; align-items: center; gap: .85rem;
+  }
+  .card.playing { border-color: #7ee0a5; box-shadow: 0 0 0 2px #7ee0a522; }
+  .card .name { font-weight: 600; word-break: break-word; }
+  .card .meta { color: #8b82a3; font-size: .8rem; }
+  .card .play { flex: 0 0 auto; }
+  .status { color: #8b82a3; margin: 1rem 0; }
+  a { color: #8ec5ff; }
+</style>
+</head>
+<body>
+<main>
+  <h1>🔊 Terraria Sounds</h1>
+  <p class="sub">Every audio file in <a href="https://github.com/kadharriminecraft/terrariasounds">kadharriminecraft/terrariasounds</a>, playable in the browser.</p>
+
+  <div class="toolbar">
+    <input type="search" id="filter" placeholder="Filter sounds…" aria-label="Filter sounds">
+    <button id="stopAll" type="button">⏹ Stop all</button>
+    <button id="reload" type="button">↻ Rescan</button>
+  </div>
+
+  <p class="status" id="status">Loading…</p>
+  <div class="grid" id="grid"></div>
+</main>
+
+<script>
+const OWNER = "kadharriminecraft", REPO = "terrariasounds", BRANCH = "main";
+const RAW = `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/`;
+const AUDIO = /\.(mp3|wav|ogg|m4a|flac|aac|opus|weba)$/i;
+
+// Fallback list, used if the GitHub API is unreachable (offline / rate-limited).
+const FALLBACK = ["Music_forrest-day.mp3", "sfx_hurt.mp3"];
+
+let items = [];
+const grid = document.getElementById("grid");
+const statusEl = document.getElementById("status");
+const filterEl = document.getElementById("filter");
+let current = null;
+
+function human(bytes) {
+  if (!bytes) return "";
+  const u = ["B", "KB", "MB", "GB"];
+  let i = 0;
+  while (bytes >= 1024 && i < u.length - 1) { bytes /= 1024; i++; }
+  return `${bytes.toFixed(bytes < 10 && i > 0 ? 1 : 0)} ${u[i]}`;
+}
+
+function render() {
+  const q = filterEl.value.trim().toLowerCase();
+  const shown = items.filter(f => f.name.toLowerCase().includes(q));
+  grid.textContent = "";
+  for (const f of shown) grid.appendChild(card(f));
+  statusEl.textContent = shown.length
+    ? `${shown.length} sound${shown.length === 1 ? "" : "s"}`
+    : "No sounds found.";
+}
+
+function card(file) {
+  const el = document.createElement("div");
+  el.className = "card";
+
+  const btn = document.createElement("button");
+  btn.className = "play";
+  btn.type = "button";
+  btn.textContent = "▶";
+
+  const info = document.createElement("div");
+  const name = document.createElement("div");
+  name.className = "name";
+  name.textContent = file.name;
+  const meta = document.createElement("div");
+  meta.className = "meta";
+  meta.textContent = [file.dir, human(file.size)].filter(Boolean).join(" · ");
+  info.append(name, meta);
+
+  btn.addEventListener("click", () => play(el, file, btn));
+  el.append(btn, info);
+  return el;
+}
+
+function play(el, file, btn) {
+  if (current) { current.audio.pause(); current.card.classList.remove("playing"); }
+  const audio = new Audio(file.url);
+  audio.preload = "none";
+  btn.textContent = "⏸";
+  el.classList.add("playing");
+  current = { audio, card: el, btn };
+  audio.addEventListener("ended", () => { btn.textContent = "▶"; el.classList.remove("playing"); });
+  audio.play().catch(err => {
+    statusEl.textContent = `Couldn't play ${file.name}: ${err.message}`;
+    btn.textContent = "▶"; el.classList.remove("playing");
+  });
+}
+
+async function scan() {
+  statusEl.textContent = "Loading…";
+  try {
+    const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/git/trees/${BRANCH}?recursive=1`,
+      { headers: { Accept: "application/vnd.github+json" } });
+    if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+    const data = await res.json();
+    const found = (data.tree || [])
+      .filter(n => n.type === "blob" && AUDIO.test(n.path))
+      .map(n => ({ name: n.path.split("/").pop(), dir: n.path.includes("/") ? n.path.split("/").slice(0, -1).join("/") : "", size: n.size, url: RAW + n.path.split("/").map(encodeURIComponent).join("/") }));
+    items = found.length ? found : FALLBACK.map(n => ({ name: n, dir: "", size: 0, url: RAW + n }));
+  } catch {
+    items = FALLBACK.map(n => ({ name: n, dir: "", size: 0, url: RAW + n }));
+    statusEl.textContent = "";
+  }
+  render();
+}
+
+filterEl.addEventListener("input", render);
+document.getElementById("reload").addEventListener("click", scan);
+document.getElementById("stopAll").addEventListener("click", () => {
+  if (current) { current.audio.pause(); current.btn.textContent = "▶"; current.card.classList.remove("playing"); current = null; }
+});
+
+scan();
+</script>
+</body>
+</html>
