@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iTunes Music Search</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="py-8 px-4 text-center bg-slate-800 border-b border-slate-700 shadow-md">
+        <h1 class="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-pink-500 to-indigo-500 bg-clip-text text-transparent">iTunes Music Search</h1>
+        <p class="text-slate-400 mt-2">Search millions of songs and preview them instantly.</p>
+        
+        <!-- Search Form -->
+        <div class="mt-6 flex justify-center max-w-xl mx-auto">
+            <input 
+                type="text" 
+                id="searchInput" 
+                placeholder="Search for artists, albums, or songs..." 
+                class="w-full px-4 py-3 rounded-l-lg bg-slate-900 border border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-100 placeholder-slate-500"
+            >
+            <button 
+                id="searchBtn" 
+                class="bg-indigo-600 hover:bg-indigo-700 px-6 py-3 rounded-r-lg font-semibold transition duration-200 flex items-center justify-center min-w-[100px]"
+            >
+                Search
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <!-- Loading Indicator -->
+        <div id="loading" class="hidden flex justify-center items-center py-12">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="hidden text-center text-red-400 py-6 bg-red-950/30 border border-red-900 rounded-lg max-w-md mx-auto"></div>
+
+        <!-- Results Grid -->
+        <div id="resultsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+        
+        <!-- Initial State / Empty State -->
+        <div id="emptyState" class="text-center text-slate-500 py-20">
+            <p class="text-xl">Start typing above to search the iTunes library.</p>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 text-slate-600 text-sm border-t border-slate-800">
+        Powered by the iTunes Search API
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const resultsGrid = document.getElementById('resultsGrid');
+        const loading = document.getElementById('loading');
+        const errorMessage = document.getElementById('errorMessage');
+        const emptyState = document.getElementById('emptyState');
+
+        // Event Listeners
+        searchBtn.addEventListener('click', performSearch);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') performSearch();
+        });
+
+        async function performSearch() {
+            const query = searchInput.value.trim();
+            
+            if (!query) return;
+
+            // Reset UI states
+            errorMessage.classList.add('hidden');
+            emptyState.classList.add('hidden');
+            resultsGrid.innerHTML = '';
+            loading.classList.remove('hidden');
+
+            try {
+                // Fetch from iTunes API (limit to 20 results)
+                const response = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=20`);
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+                
+                loading.classList.add('hidden');
+
+                if (data.resultCount === 0) {
+                    emptyState.textContent = 'No results found. Try another search.';
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                renderResults(data.results);
+
+            } catch (error) {
+                loading.classList.add('hidden');
+                errorMessage.textContent = 'Failed to fetch results. Please check your connection.';
+                errorMessage.classList.remove('hidden');
+                console.error('Search error:', error);
+            }
+        }
+
+        function renderResults(songs) {
+            resultsGrid.innerHTML = songs.map(song => {
+                // Upgrade artwork resolution from 100x100 to 300x300 for better quality
+                const highResArtwork = song.artworkUrl100 ? song.artworkUrl100.replace(/100x100bb\.jpg/g, '300x300bb\.jpg') : 'https://via.placeholder.com/300';
+                
+                return `
+                    <div class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg flex flex-col justify-between transition hover:border-slate-500">
+                        <div>
+                            <div class="relative group">
+                                <img src="${highResArtwork}" alt="${song.trackName}" class="w-full h-48 object-cover">
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg truncate text-slate-100" title="${song.trackName}">${song.trackName}</h3>
+                                <p class="text-slate-400 text-sm truncate mt-1" title="${song.artistName}">${song.artistName}</p>
+                                <p class="text-slate-500 text-xs truncate mt-0.5">${song.collectionName || 'Single'}</p>
+                            </div>
+                        </div>
+                        <div class="p-4 pt-0">
+                            ${song.previewUrl ? `
+                                <audio controls class="w-full h-10 mt-2 accent-indigo-500">
+                                    <source src="${song.previewUrl}" type="audio/mp4">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            ` : `<p class="text-xs text-slate-500 italic">No preview available</p>`}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    </script>
+</body>
+</html>
