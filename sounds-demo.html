@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Web Sounds — Demo</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;
+       justify-content:center;gap:18px;padding:24px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+       background:linear-gradient(160deg,#141a2e,#2b1240);color:#eef}
+  h1{margin:0;font-size:26px;letter-spacing:.5px}
+  p.sub{margin:0;opacity:.65;font-size:14px;text-align:center;max-width:520px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;
+        width:100%;max-width:640px}
+  button{font:inherit;font-weight:600;padding:14px 10px;border:none;border-radius:14px;cursor:pointer;
+         color:#0d1020;background:linear-gradient(180deg,#7ee0ff,#3aa8ff);
+         box-shadow:0 4px 0 #1c6fb0;transition:transform .08s,box-shadow .08s}
+  button:active{transform:translateY(3px);box-shadow:0 1px 0 #1c6fb0}
+  button.warm{background:linear-gradient(180deg,#ffd76e,#ff9a3c);box-shadow:0 4px 0 #b35a12}
+  button.bad{background:linear-gradient(180deg,#ff8fa3,#ff3b5c);box-shadow:0 4px 0 #a01230;color:#fff}
+  .panel{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center;
+         background:rgba(255,255,255,.07);padding:14px 18px;border-radius:14px;font-size:14px}
+  input[type=range]{width:130px;accent-color:#3aa8ff}
+  code{background:rgba(0,0,0,.4);padding:2px 6px;border-radius:6px;font-size:13px}
+  pre{background:rgba(0,0,0,.45);padding:14px 16px;border-radius:12px;overflow:auto;
+      max-width:640px;width:100%;font-size:12.5px;line-height:1.5;margin:0}
+  #status{font-size:13px;opacity:.7}
+</style>
+</head>
+<body>
+
+<h1>🔊 Web Sounds Demo</h1>
+<p class="sub">Every sound here is synthesized live with the Web Audio API — there are no audio files to download.</p>
+
+<div class="grid" id="grid"></div>
+
+<div class="panel">
+  <label>Volume <input type="range" id="vol" min="0" max="1" step="0.05" value="0.5"></label>
+  <button class="warm" id="mute">Mute</button>
+  <span id="status">Click any button to enable audio</span>
+</div>
+
+<pre>&lt;script src="sounds.js"&gt;&lt;/script&gt;
+Sound.init();
+Sound.play('coin');
+Sound.play('powerup', { vol: 0.8 });
+Sound.setVolume(0.3);</pre>
+
+<script src="sounds.js"></script>
+<script>
+  const LABEL = { coin:'🪙 Coin', blip:'🔵 Blip', powerup:'⚡ Powerup', hurt:'💥 Hurt',
+                  click:'👆 Click', drop:'📉 Drop', whoosh:'🌪️ Whoosh',
+                  alarm:'🚨 Alarm', eat:'🍎 Eat' };
+  const grid = document.getElementById('grid');
+  let muted = false;
+
+  Sound.init();
+
+  Object.entries(LABEL).forEach(([name, label]) => {
+    const b = document.createElement('button');
+    b.textContent = label;
+    b.onclick = () => { Sound.play(name); status(); };
+    grid.appendChild(b);
+  });
+
+  // A random bonus button: unknown name -> noise burst fallback
+  const rb = document.createElement('button');
+  rb.className = 'bad';
+  rb.textContent = '🎲 Random / Noise';
+  rb.onclick = () => {
+    const names = Sound.names;
+    const pick = Math.random() < 0.5 ? names[(Math.random()*names.length)|0] : 'nope';
+    Sound.play(pick);
+    status('played: ' + pick);
+  };
+  grid.appendChild(rb);
+
+  document.getElementById('vol').oninput = e => Sound.setVolume(+e.target.value);
+  document.getElementById('mute').onclick = () => {
+    muted = !muted;
+    Sound.mute(muted);
+    document.getElementById('mute').textContent = muted ? 'Unmute' : 'Mute';
+  };
+
+  // Browsers block audio until a gesture
+  function status(extra) {
+    document.getElementById('status').textContent =
+      (extra ? extra + ' · ' : '') + (muted ? 'muted' : 'audio ready');
+  }
+  document.addEventListener('pointerdown', () => { Sound.resume(); status(); }, { once: true });
+</script>
+</body>
+</html>
