@@ -1,0 +1,31 @@
+{
+  "name": "web-sounds",
+  "version": "1.0.0",
+  "description": "Zero-asset sound effect definitions. Sounds are synthesized at runtime with the Web Audio API, so no audio files are downloaded. Load sounds.js in a page, call Sound.init(), then Sound.play(name).",
+  "license": "MIT",
+  "engine": "Web Audio API",
+  "files": ["sounds.js"],
+  "sounds": {
+    "coin":     { desc: "Two-note rising pickup chime",        type: "square",   dur: 0.12, tags: ["pickup", "reward", "arcade"] },
+    "blip":     { desc: "Short neutral UI blip",               type: "square",   dur: 0.12, tags: ["ui"] },
+    "powerup":  { desc: "Four-note ascending fanfare",         type: "square",   dur: 0.12, tags: ["reward", "levelup"] },
+    "hurt":     { desc: "Descending sawtooth damage hit",       type: "sawtooth", dur: 0.12, tags: ["damage", "fail"] },
+    "click":    { desc: "Tight high tick",                     type: "square",   dur: 0.12, tags: ["ui", "button"] },
+    "drop":     { desc: "Three-note falling thud",             type: "sawtooth", dur: 0.12, tags: ["fail", "physics"] },
+    "whoosh":   { desc: "Fast upward swoosh",                  type: "square",   dur: 0.12, tags: ["transition", "swoosh"] },
+    "alarm":    { desc: "Two-tone warning pattern",            type: "square",   dur: 0.12, tags: ["warning", "alert"] },
+    "eat":      { desc: "Crumbly munching fall",               type: "square",   dur: 0.12, tags: ["food", "crunch"] }
+  },
+  "fallback": {
+    "any_unknown_name": "plays a short filtered white-noise burst",
+    "note": "Browsers block audio until a user gesture; call Sound.resume() on the first click or keypress."
+  },
+  "examples": [
+    "<script src='sounds.js'><\/script>",
+    "Sound.init();",
+    "document.addEventListener('pointerdown', () => Sound.resume(), { once: true });",
+    "Sound.play('coin');",
+    "Sound.play('powerup', { vol: 0.8 });",
+    "Sound.setVolume(0.3).mute(false);"
+  ]
+}
